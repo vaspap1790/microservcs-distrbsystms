@@ -1,9 +1,10 @@
 package com.vaspap.customer;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 @Service
-public record CustomerService(CustomerRepository customerRepository) {
+public record CustomerService(CustomerRepository customerRepository, RestTemplate restTemplate) {
     public void registerCustomer(CustomerRegistrationRequest request) {
         Customer customer = Customer.builder()
                 .withFirstName(request.firstName())
@@ -12,6 +13,13 @@ public record CustomerService(CustomerRepository customerRepository) {
                 .build();
         //TODO: check if email is valid
         //TODO: check if email is taken
-        customerRepository.save(customer);
+        customerRepository.saveAndFlush(customer);
+
+        FraudCheckResponse fraudCheckResponse = restTemplate.getForObject("http://localhost:8081/api/v1/fraud-check/{customerId}",
+                FraudCheckResponse.class, customer.getId());
+        if(fraudCheckResponse.isFraudster()){
+            throw new IllegalStateException("Fraudster");
+        }
+        //TODO: send notification
     }
 }
