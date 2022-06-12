@@ -1,5 +1,6 @@
 package com.vaspap.customer;
 
+import com.vaspap.amqp.RabbitMQMessageProducer;
 import com.vaspap.clients.fraud.FraudCheckResponse;
 import com.vaspap.clients.fraud.FraudClient;
 import com.vaspap.clients.notification.NotificationClient;
@@ -7,7 +8,7 @@ import com.vaspap.clients.notification.NotificationRequest;
 import org.springframework.stereotype.Service;
 
 @Service
-public record CustomerService(CustomerRepository customerRepository, FraudClient fraudClient, NotificationClient notificationClient) {
+public record CustomerService(CustomerRepository customerRepository, FraudClient fraudClient, RabbitMQMessageProducer rabbitMQMessageProducer) {
     public void registerCustomer(CustomerRegistrationRequest request) {
         Customer customer = Customer.builder()
                 .withFirstName(request.firstName())
@@ -22,11 +23,11 @@ public record CustomerService(CustomerRepository customerRepository, FraudClient
         if(fraudCheckResponse != null && fraudCheckResponse.isFraudster()){
             throw new IllegalStateException("Fraudster");
         }
-        //TODO: make it async (add it to a queue
-        notificationClient.sendNotification(
-                new NotificationRequest(customer.getId(),
-                        customer.getEmail(),
-                        String.format("Hi %s, welcome!", customer.getFirstName()))
-        );
+
+        NotificationRequest notificationRequest = new NotificationRequest(customer.getId(),
+                customer.getEmail(),
+                String.format("Hi %s, welcome!", customer.getFirstName()));
+        rabbitMQMessageProducer.publish(notificationRequest,
+                "internal.exchange", "internal.notification.routing-key");
     }
 }

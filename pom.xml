@@ -16,6 +16,7 @@
     <module>notification</module>
     <module>clients</module>
     <module>api-gateway</module>
+    <module>amqp</module>
   </modules>
 
   <name>vaspap-services</name>
