@@ -3,12 +3,18 @@ package com.vaspap.customer;
 import com.vaspap.amqp.RabbitMQMessageProducer;
 import com.vaspap.clients.fraud.FraudCheckResponse;
 import com.vaspap.clients.fraud.FraudClient;
-import com.vaspap.clients.notification.NotificationClient;
 import com.vaspap.clients.notification.NotificationRequest;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
-public record CustomerService(CustomerRepository customerRepository, FraudClient fraudClient, RabbitMQMessageProducer rabbitMQMessageProducer) {
+@AllArgsConstructor
+public class CustomerService {
+
+    private final CustomerRepository customerRepository;
+    private final FraudClient fraudClient;
+    private final RabbitMQMessageProducer rabbitMQMessageProducer;
+
     public void registerCustomer(CustomerRegistrationRequest request) {
         Customer customer = Customer.builder()
                 .withFirstName(request.firstName())
